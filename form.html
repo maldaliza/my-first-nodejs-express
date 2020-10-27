@@ -1,5 +1,6 @@
-<form action="/create_process" method="POST">
-    <p><input type="text" name="title" placeholder="title"></p>
-    <p><textarea name="description" placeholder="description" cols="30" rows="10"></textarea></p>
+<form action="/update_process" method="POST">
+    <input type="hidden" name="id" value="">
+    <p><input type="text" name="title" placeholder="title" value="{title}"></p>
+    <p><textarea name="description" placeholder="description" cols="30" rows="10">${description}</textarea></p>
     <p><input type="submit"></p>
 </form>
