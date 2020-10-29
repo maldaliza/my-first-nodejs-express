@@ -1,8 +1,13 @@
 const fs = require('fs');
 const qs = require('querystring');
 const template = require('./lib/template.js');
+const bodyParser = require('body-parser');
+const compression = require('compression');
 const express = require('express');
 const app = express();
+
+app.use(bodyParser.urlencoded({extended: false}));
+app.use(compression());
 
 app.get('/', function(request, response) {
     fs.readdir('./data', function(error, fileList) {
@@ -28,6 +33,10 @@ app.get('/page/:pageId', function(request, response) {
             const control = `
                 <a href="/create">create</a>
                 <a href="/update/${request.params.pageId}">update</a>
+                <form action="/delete_process" method="POST">
+                    <input type="hidden" name="id" value="${request.params.pageId}">
+                    <input type="submit" value="delete">
+                </form>
             `;
             const body = `
                 <h2>${title}</h2>
@@ -60,6 +69,16 @@ app.get('/create', function(request, response) {
 });
 
 app.post('/create_process', function(request, response) {
+    const post = request.body;
+    const title = post.title;
+    const description = post.description;
+
+    fs.writeFile(`./data/${title}`, description, 'utf-8', function(error) {
+        if(error) throw error;
+        response.redirect(`/page/${title}`);
+    });
+
+    /*
     let body = '';
     request.on('data', function(data) {
         body = body + data;
@@ -71,13 +90,10 @@ app.post('/create_process', function(request, response) {
 
         fs.writeFile(`./data/${title}`, description, 'utf-8', function(error) {
             if(error) throw error;
-            /*
-            response.writeHead(302, {Location: `/page/${title}`});
-            response.end();
-            */
             response.redirect(`/page/${title}`);
         });
     });
+    */
 });
 
 app.get('/update/:pageId', function(request, response) {
@@ -102,6 +118,22 @@ app.get('/update/:pageId', function(request, response) {
 });
 
 app.post('/update_process', function(request, response) {
+    const post = request.body;
+    const id = post.id;
+    const title = post.title;
+    const description = post.description;
+
+    fs.rename(`./date/${id}`, `./data/${title}`, function(error) {
+        // if(error) throw error;
+        // 에러처리에 대해 공부하기
+        fs.writeFile(`./data/${title}`, description, 'utf-8', function(err) {
+            // if(err) throw err;
+            response.redirect(`/page/${title}`);
+        });
+    });
+
+
+    /*
     let body = '';
     request.on('data', function(data) {
         body = body + data;
@@ -116,9 +148,25 @@ app.post('/update_process', function(request, response) {
             // if(error) throw error;
             // 에러처리에 대해 공부하기
             fs.writeFile(`./data/${title}`, description, 'utf-8', function(err) {
-                if(err) throw err;
+                // if(err) throw err;
                 response.redirect(`/page/${title}`);
             });
+        });
+    });
+    */
+});
+
+app.post('/delete_process', function(request, response) {
+    let body = '';
+    request.on('data', function(data) {
+        body = body + data;
+    });
+    request.on('end', function() {
+        const post = qs.parse(body);
+        const id = post.id;
+
+        fs.unlink(`./data/${id}`, function(error) {
+            response.redirect('/');
         });
     });
 });
